@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23070a0a'/><circle cx='5' cy='5' r='2.6' fill='%23334'/><circle cx='11' cy='5' r='2.6' fill='%23334'/><circle cx='8' cy='9' r='4.2' fill='%23455'/><circle cx='6.4' cy='8' r='0.7' fill='%23ff3020'/><circle cx='9.6' cy='8' r='0.7' fill='%23ff3020'/></svg>">
+<title>WONDER TOYS — Night Shift</title>
+<style>
+  :root{
+    --red:#d43a2f; --amber:#e8b34b; --ink:#0b0d0e; --paper:#cfd6cf;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;overscroll-behavior:none}
+  body{font-family:'Courier New',ui-monospace,monospace;color:var(--paper)}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;background:#000}
+  /* ---------- overlays ---------- */
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,.55) 100%);z-index:5}
+  #grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;opacity:.06;z-index:6;
+    background-image:repeating-conic-gradient(rgba(255,255,255,0) 0 3deg, rgba(255,255,255,.5) 3deg 6deg);
+    animation:gr .35s steps(4) infinite;mix-blend-mode:overlay}
+  @keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-2%,1%)}50%{transform:translate(1%,-2%)}75%{transform:translate(-1%,2%)}100%{transform:translate(2%,-1%)}}
+  #flashred{position:fixed;inset:0;pointer-events:none;background:#7d0a00;opacity:0;z-index:7;transition:opacity .12s}
+  #fade{position:fixed;inset:0;pointer-events:none;background:#000;opacity:1;z-index:40;transition:opacity .6s}
+  /* ---------- HUD ---------- */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
+  #hud.on{display:block}
+  #obj{position:absolute;top:calc(10px + env(safe-area-inset-top));left:14px;max-width:44vw;font-size:13px;letter-spacing:1px;color:#cdd4c9;text-shadow:0 1px 2px #000, 0 0 8px rgba(0,0,0,.8);line-height:1.5}
+  #obj b{color:var(--amber)}
+  #stats{position:absolute;top:calc(10px + env(safe-area-inset-top));right:calc(56px + env(safe-area-inset-right));font-size:12px;text-align:right;color:#9aa39a;text-shadow:0 1px 2px #000;letter-spacing:1px}
+  #stam{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);width:180px;height:5px;background:rgba(255,255,255,.09);border-radius:3px;overflow:hidden}
+  #stamfill{height:100%;width:100%;background:#b7c4a8;border-radius:3px;transition:background .3s}
+  #cross{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:rgba(255,255,255,.65);box-shadow:0 0 6px rgba(0,0,0,.9)}
+  #cross.hot{background:var(--red);box-shadow:0 0 8px var(--red)}
+  #prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);font-size:14px;letter-spacing:1px;color:#e6ecdf;text-shadow:0 1px 3px #000;background:rgba(8,10,10,.55);padding:7px 14px;border:1px solid rgba(255,255,255,.16);border-radius:4px;display:none;white-space:nowrap}
+  #cap{position:absolute;left:50%;bottom:calc(44px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:86vw;text-align:center;font-size:15px;line-height:1.55;color:#f0e9d8;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.9);background:rgba(5,6,7,.45);padding:6px 12px;border-radius:4px;display:none}
+  #cap.m{color:#f4c7c2}
+  #stickbase{position:absolute;left:6vw;bottom:calc(10vh + env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);display:none;pointer-events:none}
+  #sticknub{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25)}
+  #btns{position:absolute;right:calc(4vw + env(safe-area-inset-right));bottom:calc(6vh + env(safe-area-inset-bottom));display:none;grid-template-columns:repeat(2,64px);grid-gap:14px}
+  .btn{pointer-events:auto;width:64px;height:64px;border-radius:50%;background:rgba(20,24,24,.55);border:2px solid rgba(255,255,255,.22);color:#dfe6d8;font-size:11px;letter-spacing:1px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;font-family:inherit;backdrop-filter:blur(2px)}
+  .btn:active,.btn.held{background:rgba(212,58,47,.45);border-color:var(--red)}
+  #bGrab{width:84px;height:84px;font-size:13px;border-color:rgba(212,58,47,.6);grid-row:span 2;align-self:center}
+  #bAct{border-color:rgba(232,179,75,.55);color:#f0dfae;display:none}
+  #bPause{position:absolute;top:calc(8px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));pointer-events:auto;width:38px;height:38px;border-radius:8px;background:rgba(20,24,24,.55);border:1px solid rgba(255,255,255,.25);color:#dfe6d8;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+  #hint{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);font-size:11px;letter-spacing:1px;color:#7d877d;text-shadow:0 1px 2px #000;white-space:nowrap;display:none}
+  /* ---------- screens ---------- */
+  .screen{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%, #131a19 0%, #060808 70%);padding:24px;text-align:center}
+  .screen.on{display:flex}
+  .screen::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px);mix-blend-mode:overlay}
+  h1.logo{font-size:min(11vw,74px);letter-spacing:.12em;color:#e8e2cf;font-weight:bold;line-height:1;position:relative;animation:flick 4s infinite}
+  @keyframes flick{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.4}94%{opacity:1}96%{opacity:.7}97%{opacity:1}}
+  .sub{margin-top:10px;color:var(--red);letter-spacing:.5em;font-size:min(3.4vw,17px);text-transform:uppercase}
+  .tag{margin-top:26px;color:#6d766d;font-size:12px;letter-spacing:2px;max-width:520px;line-height:1.8}
+  .menu{margin-top:34px;display:flex;flex-direction:column;gap:13px;min-width:min(76vw,300px)}
+  .mi{pointer-events:auto;font-family:inherit;font-size:15px;letter-spacing:3px;padding:13px 26px;background:rgba(255,255,255,.03);color:#d8dfd2;border:1px solid rgba(255,255,255,.18);cursor:pointer;text-transform:uppercase;transition:all .15s}
+  .mi:hover,.mi:active{background:rgba(212,58,47,.16);border-color:var(--red);color:#fff}
+  .mi:disabled{opacity:.35;pointer-events:none}
+  .mi.small{font-size:12px;padding:10px 18px}
+  .foot{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));font-size:10px;color:#545c54;letter-spacing:2px}
+  .scr-title{font-size:22px;letter-spacing:6px;color:#e8e2cf;margin-bottom:8px;text-transform:uppercase}
+  .scr-sub{font-size:11px;color:#79827a;letter-spacing:2px;margin-bottom:22px}
+  .panel{width:min(92vw,560px);max-height:74vh;overflow-y:auto;pointer-events:auto;background:rgba(10,13,13,.7);border:1px solid rgba(255,255,255,.14);padding:18px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px;letter-spacing:1px;color:#c9d1c5;text-align:left}
+  .row label{color:#9fa896}
+  .seg{display:flex;gap:6px}
+  .seg button{pointer-events:auto;font-family:inherit;font-size:11px;letter-spacing:1px;padding:6px 10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#b9c2b4;cursor:pointer}
+  .seg button.sel{background:rgba(212,58,47,.35);border-color:var(--red);color:#fff}
+  input[type=range]{pointer-events:auto;width:130px;accent-color:var(--red)}
+  input[type=checkbox]{accent-color:var(--red);width:18px;height:18px}
+  .chgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(92vw,560px)}
+  .chi{pointer-events:auto;font-family:inherit;padding:14px 10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.16);color:#d8dfd2;font-size:12px;letter-spacing:1px;cursor:pointer;text-align:center;line-height:1.5}
+  .chi b{display:block;color:#e8e2cf;font-size:13px;letter-spacing:2px}
+  .chi:disabled{opacity:.3;pointer-events:none}
+  .archgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(92vw,600px)}
+  .tapei{pointer-events:auto;font-family:inherit;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.16);color:#c9d1c5;font-size:11px;letter-spacing:1px;cursor:pointer;text-align:left;line-height:1.6}
+  .tapei b{color:#e8d9a8}
+  .tapei:disabled{opacity:.3;pointer-events:none}
+  /* slides / cards */
+  #slides{background:#000}
+  .slide{max-width:min(88vw,640px);font-size:clamp(14px,2.6vw,19px);line-height:2;color:#cfd6cf;letter-spacing:1px;white-space:pre-wrap;text-align:center;animation:slin 1.4s}
+  @keyframes slin{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+  .tapnext{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));font-size:11px;color:#5a635a;letter-spacing:3px;animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.3}}
+  #card{background:#000;z-index:28}
+  .cardc{font-size:min(9vw,46px);letter-spacing:.35em;color:#e8e2cf;text-transform:uppercase}
+  .cardc2{margin-top:16px;font-size:min(4vw,20px);letter-spacing:.5em;color:var(--red)}
+  /* tape viewer */
+  #tapeview{background:#000}
+  #tvframe{width:min(88vw,620px);aspect-ratio:4/3;max-height:52vh;background:#0a0c0a;border:10px solid #14161a;border-radius:6px;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.9), inset 0 0 60px rgba(0,0,0,.7)}
+  #tvcan{width:100%;height:100%;display:block}
+  #tvtxt{position:absolute;inset:auto 8% 7% 8%;font-size:clamp(12px,2.4vw,16px);line-height:1.7;color:#e8e4cf;text-shadow:0 1px 2px #000;text-align:left;white-space:pre-wrap}
+  #tvhead{position:absolute;top:6%;left:8%;font-size:12px;letter-spacing:2px;color:var(--red)}
+  .rec{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);margin-right:8px;animation:pulse 1.2s infinite}
+  /* death */
+  #death{background:radial-gradient(ellipse at center, #1a0503 0%, #000 75%)}
+  #death h2{font-size:min(10vw,52px);color:var(--red);letter-spacing:.2em;animation:shake .5s}
+  @keyframes shake{0%,100%{transform:translate(0)}20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,2px)}80%{transform:translate(4px,-2px)}}
+  #dtip{margin-top:22px;color:#8d8377;font-size:13px;letter-spacing:1px;max-width:520px;line-height:1.9}
+  #dcount{margin-top:12px;color:#6a5f55;font-size:11px;letter-spacing:2px}
+  /* ending */
+  #ending h2{font-size:min(9vw,44px);color:#e8e2cf;letter-spacing:.25em}
+  #endstats{margin-top:26px;font-size:14px;line-height:2.2;color:#b9c2b4;letter-spacing:2px}
+  #endstats b{color:var(--amber)}
+  #endtease{margin-top:30px;color:var(--red);font-size:13px;letter-spacing:3px}
+  /* misc */
+  #rotate{position:fixed;inset:0;z-index:60;background:#000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;color:#cfd6cf;letter-spacing:3px;font-size:14px;text-align:center}
+  .phoneicon{width:38px;height:66px;border:3px solid #cfd6cf;border-radius:8px;animation:rot 1.6s ease-in-out infinite}
+  @keyframes rot{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+  #err{position:fixed;left:6px;top:6px;z-index:99;max-width:80vw;background:rgba(120,0,0,.85);color:#ffd9d4;font-size:11px;padding:8px 10px;border-radius:4px;display:none;white-space:pre-wrap;pointer-events:auto;font-family:monospace}
+  #topdown{position:fixed;inset:0;z-index:98;display:none;margin:auto;background:#000}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vig"></div><div id="grain"></div><div id="flashred"></div><div id="fade"></div>
+
+<div id="hud">
+  <div id="obj"></div>
+  <div id="stats"></div>
+  <div id="cross"></div>
+  <div id="prompt"></div>
+  <div id="cap"></div>
+  <div id="stam"><div id="stamfill"></div></div>
+  <div id="stickbase"><div id="sticknub"></div></div>
+  <div id="btns">
+    <div class="btn" id="bFlash">LIGHT</div>
+    <div class="btn" id="bRun">RUN</div>
+    <div class="btn" id="bAct">USE</div>
+    <div class="btn" id="bGrab">GRAB</div>
+  </div>
+  <div id="bPause">❚❚</div>
+  <div id="hint">WASD MOVE · MOUSE LOOK · E USE · SHIFT RUN · F LIGHT · CLICK GRAB</div>
+</div>
+
+<div class="screen on" id="title">
+  <h1 class="logo">WONDER&nbsp;TOYS</h1>
+  <div class="sub">Night Shift</div>
+  <div class="tag">"FRIENDS ARE FOREVER. EMPLOYEES ARE NOT."<br><br>HEADPHONES RECOMMENDED · FLASHING LIGHTS</div>
+  <div class="menu">
+    <button class="mi" id="mNew">New Game</button>
+    <button class="mi" id="mCont" disabled>Continue</button>
+    <button class="mi" id="mChap">Chapters</button>
+    <button class="mi" id="mArch">Tape Archive</button>
+    <button class="mi" id="mSet">Settings</button>
+  </div>
+  <div class="foot">A FAN-STYLE HORROR EXPERIENCE · MADE WITH THREE.JS</div>
+</div>
+
+<div class="screen" id="chapters">
+  <div class="scr-title">Chapters</div>
+  <div class="scr-sub">progress is saved automatically</div>
+  <div class="chgrid" id="chgrid"></div>
+  <div class="menu"><button class="mi small" id="chBack">Back</button></div>
+</div>
+
+<div class="screen" id="archive">
+  <div class="scr-title">Tape Archive</div>
+  <div class="scr-sub" id="archcount"></div>
+  <div class="archgrid" id="archgrid"></div>
+  <div class="menu"><button class="mi small" id="archBack">Back</button></div>
+</div>
+
+<div class="screen" id="settings">
+  <div class="scr-title">Settings</div>
+  <div class="panel" id="setpanel"></div>
+  <div class="menu"><button class="mi small" id="setBack">Back</button></div>
+</div>
+
+<div class="screen" id="pause">
+  <div class="scr-title">Paused</div>
+  <div class="menu">
+    <button class="mi" id="pResume">Resume</button>
+    <button class="mi" id="pRestart">Restart Chapter</button>
+    <button class="mi" id="pSet">Settings</button>
+    <button class="mi" id="pQuit">Quit to Title</button>
+  </div>
+</div>
+
+<div class="screen" id="death">
+  <h2>HE FOUND YOU</h2>
+  <div id="dtip"></div>
+  <div id="dcount"></div>
+  <div class="menu">
+    <button class="mi" id="dRetry">Try Again</button>
+    <button class="mi" id="dQuit">Quit to Title</button>
+  </div>
+</div>
+
+<div class="screen" id="slides"><div class="slide" id="slidetext"></div><div class="tapnext">TAP / CLICK TO CONTINUE</div></div>
+<div class="screen" id="card"><div><div class="cardc" id="card1"></div><div class="cardc2" id="card2"></div></div></div>
+
+<div class="screen" id="tapeview">
+  <div id="tvframe">
+    <canvas id="tvcan" width="320" height="240"></canvas>
+    <div id="tvhead"><span class="rec"></span>PLAY</div>
+    <div id="tvtxt"></div>
+  </div>
+  <div class="menu"><button class="mi small" id="tvStop">Stop Tape</button></div>
+</div>
+
+<div class="screen" id="ending">
+  <h2>CLOCK OUT</h2>
+  <div id="endstats"></div>
+  <div id="endtease">"DADDY, THE BEAR SAYS HI."</div>
+  <div class="menu"><button class="mi" id="eMenu">Main Menu</button></div>
+</div>
+
+<div id="rotate"><div class="phoneicon"></div><div>ROTATE YOUR DEVICE<br><span style="color:#6d766d;font-size:11px">this experience is played in landscape</span></div></div>
+<canvas id="topdown" width="800" height="800"></canvas>
+<div id="err"></div>
+
+<script src="lib/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
